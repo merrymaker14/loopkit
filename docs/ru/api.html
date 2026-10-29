@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Инструмент Unity для временных петель, расписаний NPC и знаний персонажей. Верни мир в начало, запомни улику и узнай, почему новая попытка может закончиться иначе."><title>API LoopKit | Strange Euphoria XR</title><link rel="icon" href="../assets/logo.png" type="image/png"><link rel="stylesheet" href="../assets/site.css?v=1.0.0"><script src="../assets/language.js" defer></script></head>
+<body><a class="skip" href="#main">Перейти к содержимому</a><header><a class="brand" href="index.html"><img src="../assets/logo.png" width="44" height="44" alt=""><span>LoopKit</span></a><nav aria-label="Документация"><a href="guide.html">Быстрый старт и руководство</a><a href="api.html">Справочник API</a></nav><nav class="languages" aria-label="Язык документации"><a href="../en/api.html" hreflang="en" lang="en" data-language="en">English</a><a href="../ru/api.html" hreflang="ru" lang="ru" data-language="ru" aria-current="page">Русский</a><a href="../es/api.html" hreflang="es" lang="es" data-language="es">Español</a><a href="../zh-Hans/api.html" hreflang="zh-Hans" lang="zh-Hans" data-language="zh-Hans">简体中文</a></nav></header><main id="main" tabindex="-1"><article class="document"><a class="back" href="index.html">Обзор LoopKit</a><h1>LoopKit — справка API</h1>
+<p>Пространства имён: <code>StrangeEuphoriaXR.LoopKit</code> — независимое ядро C#; <code>.Unity</code> — компоненты Unity и файлы; <code>.Editor</code> — диагностика и настройка.</p>
+<pre tabindex="0"><code class="language-csharp">using StrangeEuphoriaXR.LoopKit;
+
+var loop = new LoopSession(&quot;courtyard-v1&quot;,
+    new[] { new LoopCue(&quot;courier_leaves&quot;, 5, &quot;courier&quot;, &quot;leave&quot;, &quot;gate&quot;) },
+    new[] { new LoopFact(&quot;gate&quot;, &quot;closed&quot;), new LoopFact(&quot;code&quot;, &quot;2417&quot;) });
+loop.TryLearn(loop.Stamp, &quot;player&quot;, &quot;code&quot;, &quot;2417&quot;,
+    LoopLifetime.Persistent, &quot;note&quot;, &quot;Read the keeper's note.&quot;);
+loop.AdvanceTo(6);
+var reset = loop.BeginReset();
+if (reset.Done &amp;&amp; reset.Report.Succeeded) loop.Running = true;
+</code></pre>
+<p>Если операция не завершилась сразу, вызывайте <code>reset.Tick(unscaledRealSeconds)</code> из обновления игры до Done. У <code>LoopClockBehaviour</code> это уже реализовано.</p>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Контракт</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LoopSession.SetSchedule</code></td>
+<td>Замена целого расписания при остановленных часах, нулевом времени и отсутствии незавершённой работы; проверка до изменения; порядок равных отметок сохраняется; до 10000 событий</td>
+</tr>
+<tr>
+<td><code>ConfigureFacts</code></td>
+<td>До первого запуска, записей, сброса и создания работы; до 10000 описаний</td>
+</tr>
+<tr>
+<td><code>Advance</code> / <code>AdvanceTo</code></td>
+<td>Неотрицательное конечное время до 315360000 секунд; обработчики видят точную отметку каждого события</td>
+</tr>
+<tr>
+<td><code>Pause</code> / <code>Resume</code></td>
+<td>Сравнение владельцев по ссылке; каждый владелец снимает свою паузу, а сброс снимает паузы всех владельцев</td>
+</tr>
+<tr>
+<td><code>Stamp</code> / <code>IsCurrent</code></td>
+<td>ID сессии и растущее поколение; отметка недействительна во время сброса, ошибки и после Dispose</td>
+</tr>
+<tr>
+<td><code>BeginWork</code></td>
+<td>Дескриптор удерживается до действительного завершения задачи/нативной работы, а не лишь принятия отмены</td>
+</tr>
+<tr>
+<td><code>TrySetFact</code></td>
+<td>Явная запись состояния мира; знание никому автоматически не выдаётся</td>
+</tr>
+<tr>
+<td><code>TryLearn</code></td>
+<td>Наблюдатель, увиденное значение, срок, источник и причина; это отдельно от истины мира</td>
+</tr>
+<tr>
+<td><code>Knowledge.TryExplain</code></td>
+<td>Последнее текущее знание с источником, причиной, временем и поколением получения</td>
+</tr>
+<tr>
+<td><code>TryRecordDecision</code></td>
+<td>Принятие/отказ с причиной; само игровое действие не выполняется</td>
+</tr>
+<tr>
+<td><code>Knowledge.Journal</code></td>
+<td>Последние 512 записей; диагностическая история, а не бессрочный надёжный журнал</td>
+</tr>
+<tr>
+<td><code>Register(ILoopParticipant)</code></td>
+<td>Уникальный ID, отмена, восстановление и проверка; регистрация до сброса</td>
+</tr>
+<tr>
+<td><code>Unregister(ILoopParticipant)</code></td>
+<td>Вне сброса удаляет сразу. Во время сброса сохраняет текущий snapshot и откладывает удаление до завершения, перед <code>ResetFinished</code>, в том числе при ошибке. Текущие callbacks/ожидание ещё могут вызываться; уничтожаемый участник должен это учитывать. Удаление не завершает рабочие дескрипторы.</td>
+</tr>
+<tr>
+<td><code>BeginReset</code></td>
+<td>Остановка, инвалидация, отмена, ожидание, восстановление, проверка; тайм-аут по умолчанию 10 реальных секунд; автоматически не продолжает время</td>
+</tr>
+<tr>
+<td><code>CaptureCoreState</code></td>
+<td>Только часы, факты, знания; запрещено во время обработки события или перехода</td>
+</tr>
+<tr>
+<td><code>RestoreCoreState</code></td>
+<td>Совпадение схемы, описания и его отпечатка, корректный префикс событий; при участниках мира загрузка отклоняется</td>
+</tr>
+<tr>
+<td><code>LoopCheckpointFile</code></td>
+<td>JSON до 4 МиБ, атомарная замена в одной папке и прежний файл <code>.bak</code></td>
+</tr>
+<tr>
+<td><code>LoopRehearsal.Run</code></td>
+<td>Фабрика новой логической сессии, явные действия и ожидания; системы сцены не симулируются; шаг <code>ExpectKnowledge</code> с пустым значением принимает любое известное значение</td>
+</tr>
+</tbody>
+</table></div>
+<p>До 10000 пар наблюдатель/факт. Для пары возможны два слоя: прежнее постоянное знание и временное текущее. ID — непустые, до 160 символов, без управляющих знаков; значения и причины — до 8192 символов. Ограничение размера файла может сработать раньше ограничений отдельных полей; прежний файл при отказе не заменяется.</p>
+<p>Операции с изменяемой сессией принадлежат потоку её создания; только <code>LoopWork.Dispose</code> допускает рабочий поток. Отметка поколения защищает от запоздалой работы по ошибке, а не от произвольного кода самой игры.</p>
+<p>MCP-интеграция использует API Unity Pipeline <code>0.8.0-exp.1</code>. Для других версий Pipeline или при его отсутствии сборка адаптера исключается; ядро остаётся доступным. Команда подключения: <code>unity mcp --project-path &lt;полный-путь-проекта&gt;</code>. Четыре команды <code>loopkit_*</code> только читают; сервера в Player нет.</p>
+<h2>Компоненты инспектора и постоянная память</h2>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Контракт</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CapturePersistentMemory</code></td>
+<td>Только постоянные факты мира и постоянные исходные знания; без времени и состояния сцены.</td>
+</tr>
+<tr>
+<td><code>RestorePersistentMemory</code></td>
+<td>Валидация и глубокая копия до изменения; отмена, ожидание, замена памяти, восстановление/проверка мира на нулевом времени.</td>
+</tr>
+<tr>
+<td><code>LoopMemoryFile</code></td>
+<td>JSON до 4 МиБ, атомарная замена и прежний .bak (сам не загружается); совпадение схемы, ID описания и ID постоянных фактов. Изменения расписания память не ломают.</td>
+</tr>
+<tr>
+<td><code>Revision / MemoryRevision</code></td>
+<td>Счётчики изменений для синхронизации и постоянного сохранения; чтение не вызывает обработчиков.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RememberAcrossRuns</code></td>
+<td>Автозагрузка и сохранение одной галочкой; MemoryPath относительно persistentDataPath, если не абсолютный.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RecoverMemoryFromCurrentSession()</code></td>
+<td>Явное восстановление после ошибки памяти и завершения Start. Копирует существующие основной файл и <code>.bak</code> в уникальные <code>.recovery-&lt;id&gt;</code>, затем записывает текущую постоянную память. Возвращает false во время загрузки/группы событий или при неисправной сессии. Файловая ошибка задаёт <code>PersistenceError</code> и оставляет автосохранение отключённым; успех включает его. Не загружает старые улики, не сбрасывает мир и не меняет состояние запуска.</td>
+</tr>
+<tr>
+<td><code>LoopTimeSource</code></td>
+<td>По умолчанию GameTime; RealTime выбирается явно. Ожидание сброса в обоих случаях реальное.</td>
+</tr>
+<tr>
+<td><code>LoopCueEvents.TryInvoke</code></td>
+<td>ID события и исходный LoopStamp; отклоняет старое поколение. Группа UnityEvent синхронна.</td>
+</tr>
+<tr>
+<td><code>RestartLoop / LoadMemoryFromEvent</code></td>
+<td>Void-методы для UnityEvent; переход после завершения группы. Последний запрос перехода имеет приоритет. Внутри группы <code>Restart()</code> и <code>LoadMemory()</code> возвращают <code>null</code>: переход начнётся после неё.</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeGate</code></td>
+<td>Условие наблюдатель/факт/значение, объекты и события; пересчёт после синхронизации/сброса/загрузки, включая неактивные цели.</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeAction.Learn</code></td>
+<td>Знание, срок, источник и причина из инспектора; факты мира не меняются.</td>
+</tr>
+<tr>
+<td><code>LoopFactAction.Apply</code></td>
+<td>Изменяет истину мира без обучения наблюдателей.</td>
+</tr>
+<tr>
+<td><code>LoopTimedRoute</code></td>
+<td>Зафиксированные неподвижные мировые маркеры, возрастающее время, плавный/мгновенный переход; участник сброса, без обхода препятствий.</td>
+</tr>
+<tr>
+<td><code>LoopClockComponent.BindClock</code></td>
+<td>Вызывается после назначения часов созданному компоненту. Смена/снятие привязки во время сброса любой из сессий или привязка к неисправной целевой сессии отклоняется до изменения старой привязки и возвращает поле clock. Повторите после завершения перехода/исправления. Awake часов записывает ошибку компонента в Console вместе с объектом и продолжает привязку остальных.</td>
+</tr>
+<tr>
+<td><code>LoopNavMeshRoute</code></td>
+<td>Необязательная сборка Navigation 2.x; нужны NavMesh и агент. Ведёт агента на любой скорости часов; пауза часов останавливает движение; перемотка, загрузка и сброс переносят точно; проверка сброса допускает притяжение к NavMesh в пределах радиуса агента.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RestartAndRun</code></td>
+<td>Void-действие UnityEvent: сброс, ожидание успешного восстановления/проверки и запуск. Новый сброс или загрузка отменяет прежний запрос продолжения.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Требуется Unity 6000.5.7f1. Рецепты инспектора, восстановление после ошибок файла и пример описаны в руководстве.</p></article></main><footer><span>LoopKit 1.0.0 · Инструмент Strange Euphoria XR</span><span><a href="../assets/LICENSE.txt">Лицензия</a> · <a href="../assets/Third-Party-Notices.txt">Сторонние компоненты</a> · <a href="../assets/CHANGELOG.txt">Изменения</a></span><span>© 2026 Strange Euphoria XR. Все права защищены.</span></footer></body></html>

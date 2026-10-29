@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-Hans"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用于 Unity 时间循环、NPC 日程和角色知识的工具包。重置世界，保留线索，解释下一次尝试为何能有不同的结局。"><title>LoopKit API | Strange Euphoria XR</title><link rel="icon" href="../assets/logo.png" type="image/png"><link rel="stylesheet" href="../assets/site.css?v=1.0.0"><script src="../assets/language.js" defer></script></head>
+<body><a class="skip" href="#main">跳到正文</a><header><a class="brand" href="index.html"><img src="../assets/logo.png" width="44" height="44" alt=""><span>LoopKit</span></a><nav aria-label="文档"><a href="guide.html">快速入门与指南</a><a href="api.html">API 参考</a></nav><nav class="languages" aria-label="文档语言"><a href="../en/api.html" hreflang="en" lang="en" data-language="en">English</a><a href="../ru/api.html" hreflang="ru" lang="ru" data-language="ru">Русский</a><a href="../es/api.html" hreflang="es" lang="es" data-language="es">Español</a><a href="../zh-Hans/api.html" hreflang="zh-Hans" lang="zh-Hans" data-language="zh-Hans" aria-current="page">简体中文</a></nav></header><main id="main" tabindex="-1"><article class="document"><a class="back" href="index.html">LoopKit 概览</a><h1>LoopKit — API 参考</h1>
+<p>命名空间：<code>StrangeEuphoriaXR.LoopKit</code> 是独立 C# 核心；<code>.Unity</code> 提供 Unity 组件和文件；<code>.Editor</code> 提供诊断和编辑；</p>
+<pre tabindex="0"><code class="language-csharp">using StrangeEuphoriaXR.LoopKit;
+
+var loop = new LoopSession(&quot;courtyard-v1&quot;,
+    new[] { new LoopCue(&quot;courier_leaves&quot;, 5, &quot;courier&quot;, &quot;leave&quot;, &quot;gate&quot;) },
+    new[] { new LoopFact(&quot;gate&quot;, &quot;closed&quot;), new LoopFact(&quot;code&quot;, &quot;2417&quot;) });
+loop.TryLearn(loop.Stamp, &quot;player&quot;, &quot;code&quot;, &quot;2417&quot;,
+    LoopLifetime.Persistent, &quot;note&quot;, &quot;Read the keeper's note.&quot;);
+loop.AdvanceTo(6);
+var reset = loop.BeginReset();
+if (reset.Done &amp;&amp; reset.Report.Succeeded) loop.Running = true;
+</code></pre>
+<p>如果重置未立即完成，在游戏更新中调用 <code>reset.Tick(unscaledRealSeconds)</code> 直到 Done。<code>LoopClockBehaviour</code> 已自动处理。</p>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>契约</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LoopSession.SetSchedule</code></td>
+<td>时钟停止、时间为零且无待完成工作时替换完整日程；修改前验证；同时间保持原顺序；最多 10000 个事件</td>
+</tr>
+<tr>
+<td><code>ConfigureFacts</code></td>
+<td>首次运行、写入、重置及创建工作之前；最多 10000 个定义</td>
+</tr>
+<tr>
+<td><code>Advance</code> / <code>AdvanceTo</code></td>
+<td>有限非负时间，上限 315360000 秒；回调看到准确事件边界</td>
+</tr>
+<tr>
+<td><code>Pause</code> / <code>Resume</code></td>
+<td>按对象身份区分；每个暂停方释放自己的暂停，重置会清除所有暂停方</td>
+</tr>
+<tr>
+<td><code>Stamp</code> / <code>IsCurrent</code></td>
+<td>会话身份和递增代次；重置、故障或 Dispose 后无效</td>
+</tr>
+<tr>
+<td><code>BeginWork</code></td>
+<td>底层任务或原生工作真正结束前保留句柄，仅确认取消不够</td>
+</tr>
+<tr>
+<td><code>TrySetFact</code></td>
+<td>显式世界状态，不会自动授予知识</td>
+</tr>
+<tr>
+<td><code>TryLearn</code></td>
+<td>观察者、观察值、范围、来源和原因，与世界真相独立</td>
+</tr>
+<tr>
+<td><code>Knowledge.TryExplain</code></td>
+<td>当前证据及来源、原因、获知时间和代次</td>
+</tr>
+<tr>
+<td><code>TryRecordDecision</code></td>
+<td>接受或拒绝及原因，不执行游戏操作</td>
+</tr>
+<tr>
+<td><code>Knowledge.Journal</code></td>
+<td>最近 512 条诊断记录，不是无限持久日志</td>
+</tr>
+<tr>
+<td><code>Register(ILoopParticipant)</code></td>
+<td>唯一 ID、取消、恢复、验证；重置前注册</td>
+</tr>
+<tr>
+<td><code>Unregister(ILoopParticipant)</code></td>
+<td>重置外立即移除。重置期间保留当前快照，在完成时、<code>ResetFinished</code> 之前移除，失败时也如此。当前回调/等待仍可能执行，已销毁的参与对象须能安全处理这些调用。移除不会结束工作 lease。</td>
+</tr>
+<tr>
+<td><code>BeginReset</code></td>
+<td>停止、失效旧标记、取消、等待、恢复并验证；默认超时为 10 真实秒；不自动继续运行</td>
+</tr>
+<tr>
+<td><code>CaptureCoreState</code></td>
+<td>只含时钟、事实、知识；事件分发和过渡期间禁止保存</td>
+</tr>
+<tr>
+<td><code>RestoreCoreState</code></td>
+<td>要求匹配版本、定义和指纹及合法事件前缀；已注册世界参与对象时拒绝加载</td>
+</tr>
+<tr>
+<td><code>LoopCheckpointFile</code></td>
+<td>JSON 上限 4 MiB，同目录原子替换，前一版本保留为 <code>.bak</code></td>
+</tr>
+<tr>
+<td><code>LoopRehearsal.Run</code></td>
+<td>新逻辑会话工厂、显式操作和断言，不模拟场景系统；值为空的 <code>ExpectKnowledge</code> 步骤接受任意已知值</td>
+</tr>
+</tbody>
+</table></div>
+<p>最多 10000 个观察者/事实组合；每组可同时保存原有永久记忆和当前临时认知。ID 不可为空，最多 160 字符，禁止控制字符；值和原因最多 8192 字符。文件大小限制可能先触发，过大的存档不会替换原文件。</p>
+<p>会话操作属于创建线程，只有 <code>LoopWork.Dispose</code> 可从工作线程调用。代次标记用于拒绝意外迟到的工作，不是阻止游戏任意代码的安全边界。</p>
+<p>MCP 集成使用 Unity Pipeline <code>0.8.0-exp.1</code> 的 API。缺少 Pipeline 或使用其他版本时排除适配程序集，核心功能仍然可用。通过 <code>unity mcp --project-path &lt;项目绝对路径&gt;</code> 连接。四个 <code>loopkit_*</code> 工具只读，Player 中没有服务器。</p>
+<h2>Inspector 组件与永久记忆</h2>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>约定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CapturePersistentMemory</code></td>
+<td>仅永久世界事实与持久证据基线，不含时钟或场景状态。</td>
+</tr>
+<tr>
+<td><code>RestorePersistentMemory</code></td>
+<td>修改前验证并深拷贝；取消、等待、替换记忆，在时间零恢复并验证参与对象。</td>
+</tr>
+<tr>
+<td><code>LoopMemoryFile</code></td>
+<td>JSON 最大 4 MiB；原子替换并保留 .bak（不会自动读取）；版本、定义 ID 和永久事实 ID 必须匹配。日程变化不影响记忆有效性。</td>
+</tr>
+<tr>
+<td><code>Revision / MemoryRevision</code></td>
+<td>用于同步与永久保存的变化计数器；读取不调用回调。</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RememberAcrossRuns</code></td>
+<td>一个复选框启用自动读写；MemoryPath 默认为相对 persistentDataPath，也可为绝对路径。</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RecoverMemoryFromCurrentSession()</code></td>
+<td>在持久化出错且 Start 完成后显式恢复。将现有主文件和 <code>.bak</code> 复制到唯一的 <code>.recovery-&lt;id&gt;</code> 文件，再保存当前永久记忆。读取期间、Inspector 事件组中或会话无效时返回 false。文件操作失败会设置 <code>PersistenceError</code> 并保持自动保存禁用；成功后重新启用。不会读取旧线索、重置世界或改变运行状态。</td>
+</tr>
+<tr>
+<td><code>LoopTimeSource</code></td>
+<td>默认 GameTime；明确选择 RealTime。两者的重置等待均使用真实时间。</td>
+</tr>
+<tr>
+<td><code>LoopCueEvents.TryInvoke</code></td>
+<td>事件 ID 与原始 LoopStamp；拒绝旧代次。UnityEvent 组同步执行。</td>
+</tr>
+<tr>
+<td><code>RestartLoop / LoadMemoryFromEvent</code></td>
+<td>UnityEvent 使用的 void 方法；该组结束后切换；最后提出的切换请求生效。在组内调用时 <code>Restart()</code> 与 <code>LoadMemory()</code> 返回 <code>null</code>，因为切换在组结束后才开始。</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeGate</code></td>
+<td>观察者/事实/值条件，对象激活和事件；同步、读取、重置后更新，也支持未激活对象。</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeAction.Learn</code></td>
+<td>Inspector 配置知识、范围、来源和原因；不改变世界事实。</td>
+</tr>
+<tr>
+<td><code>LoopFactAction.Apply</code></td>
+<td>修改世界事实，不让观察者自动学会。</td>
+</tr>
+<tr>
+<td><code>LoopTimedRoute</code></td>
+<td>捕获固定世界标记，严格递增时间，插值或切换；负责重置，不包含避障。</td>
+</tr>
+<tr>
+<td><code>LoopClockComponent.BindClock</code></td>
+<td>为生成的组件指定时钟后调用。任一会话正在重置时更改/解除绑定，或绑定到故障目标会话，会在改变旧绑定前抛出异常并恢复 clock 字段。转换完成或故障恢复后重试。时钟的 Awake 会在 Console 中连同对象记录出错的组件，并继续绑定其余组件。</td>
+</tr>
+<tr>
+<td><code>LoopNavMeshRoute</code></td>
+<td>可选 Navigation 2.x 程序集，需要 NavMesh 和代理；任何时钟速度下都由代理寻路；随时钟暂停；跳转、读取和重置时 Warp；重置验证允许在代理半径内吸附到 NavMesh。</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RestartAndRun</code></td>
+<td>UnityEvent 的 void 操作：重置、等待成功恢复与验证，然后运行。新的重置或读取会取消旧的继续运行请求。</td>
+</tr>
+</tbody>
+</table></div>
+<p>需要 Unity 6000.5.7f1。Inspector 配置、文件错误恢复和完整示例见指南。</p></article></main><footer><span>LoopKit 1.0.0 · Strange Euphoria XR 出品</span><span><a href="../assets/LICENSE.txt">许可</a> · <a href="../assets/Third-Party-Notices.txt">第三方声明</a> · <a href="../assets/CHANGELOG.txt">更新记录</a></span><span>© 2026 Strange Euphoria XR。保留所有权利。</span></footer></body></html>

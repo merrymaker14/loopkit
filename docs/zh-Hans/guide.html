@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hans"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用于 Unity 时间循环、NPC 日程和角色知识的工具包。重置世界，保留线索，解释下一次尝试为何能有不同的结局。"><title>LoopKit 指南 | Strange Euphoria XR</title><link rel="icon" href="../assets/logo.png" type="image/png"><link rel="stylesheet" href="../assets/site.css?v=1.0.0"><script src="../assets/language.js" defer></script></head>
+<body><a class="skip" href="#main">跳到正文</a><header><a class="brand" href="index.html"><img src="../assets/logo.png" width="44" height="44" alt=""><span>LoopKit</span></a><nav aria-label="文档"><a href="guide.html">快速入门与指南</a><a href="api.html">API 参考</a></nav><nav class="languages" aria-label="文档语言"><a href="../en/guide.html" hreflang="en" lang="en" data-language="en">English</a><a href="../ru/guide.html" hreflang="ru" lang="ru" data-language="ru">Русский</a><a href="../es/guide.html" hreflang="es" lang="es" data-language="es">Español</a><a href="../zh-Hans/guide.html" hreflang="zh-Hans" lang="zh-Hans" data-language="zh-Hans" aria-current="page">简体中文</a></nav></header><main id="main" tabindex="-1"><article class="document"><a class="back" href="index.html">LoopKit 概览</a><h1>LoopKit 使用指南</h1>
+<p>需要 Unity <strong>6000.5.7f1</strong>。包中包含标准 Unity 组件、独立 C# 核心和两个可导入示例。不需要模型或在线服务。工具界面与文档提供英语、俄语、西班牙语和简体中文。</p>
+<h2>在 Inspector 中开始</h2>
+<ol>
+<li>通过 Package Manager → My Assets → Import 导入 Asset Store 包，或通过 Assets → Import Package → Custom Package 导入本地 <code>.unitypackage</code>。UPM 版本使用 Package Manager → Add package from disk（<code>package.json</code>）或 Add package from tarball（<code>.tgz</code>）。</li>
+<li>在 Project 中创建 <strong>Strange Euphoria XR → LoopKit → Loop definition</strong>。指定稳定且唯一的 ID，添加世界事实和日程事件。</li>
+<li>在场景对象上添加 <strong>LoopClockBehaviour</strong>，指定定义，设置起始时分、速度及<strong>游戏时间</strong>，勾选<strong>启动时运行</strong>。</li>
+<li>打开 <strong>Tools → Strange Euphoria XR → LoopKit → Workbench</strong>。语言选择器也会更新组件 Inspector。</li>
+</ol>
+<p>Asset Store 版本位于 <code>Assets/StrangeEuphoriaXR/LoopKit</code>，已包含 <code>Documentation</code> 和 <code>Samples</code>。UPM 的指南位于 <code>Documentation~</code>，示例源文件位于 <code>Samples~</code>；使用前须通过 Package Manager → Samples 导入示例。每个项目只保留一份 LoopKit。需要标准 Unity Audio、IMGUI、JSON serialization、Physics 与 UIElements 模块；可选集成另行安装。</p>
+<h2>跨游戏启动保留线索</h2>
+<p>勾选时钟上的<strong>跨游戏启动保留记忆</strong>，即可自动保存和读取永久事实及观察者的持久知识。相对路径基于 <code>Application.persistentDataPath</code>，<code>{definition}</code> 替换为经过转义的定义 ID。不同游戏、存档槽和独立时钟应使用不同文件。</p>
+<p>使用 <strong>LoopKnowledgeAction</strong>：指定时钟、观察者 <code>player</code>、事实 ID、来源和原因，选择<strong>跨循环</strong>，将 <strong>Learn</strong> 连接到按钮、触发器或日程事件。读取世界事实不会自动让任何角色学会它。</p>
+<p>读取会开始新循环：取消旧操作，等待其真正结束，替换永久记忆，恢复所有注册的场景参与对象并验证世界。临时事实和认知被清除；临时矛盾不会破坏永久记忆基线。即使已注册 Reset Transform，也能读取。</p>
+<p>永久数据变化及成功重置后自动保存；初始化成功后暂停应用或退出时也会保存。JSON 限制为 4 MiB，文件原子替换，上一份保留为 <code>.bak</code> 供手动恢复；LoopKit 不会自行读取 <code>.bak</code>。版本、定义 ID 以及永久事实 ID 集合必须一致。游戏更新中移动、添加或删除日程事件不会使已保存的记忆失效；添加、删除或重命名永久事实需要新的记忆路径或自行迁移。启用自动记忆后，无效的启动文件，或已进入重置但等待/验证失败的读取，会使自动保存保持禁用，<strong>启动时运行</strong>也不会启动时钟：由游戏决定向玩家提供什么。若手动读取在转换前被拒绝，例如 JSON 无效或指纹不匹配，现有会话仍然有效：自动保存继续使用选定路径，并可能在永久数据变化后替换该文件。时钟 Inspector 显示技术详情。继续前请保留原文件，并选择正确的路径/定义或明确迁移后的新存档槽。文件存储在 Windows 上验证；它不是云同步，也不是任意场景序列化。</p>
+<p>若要继续使用当前游戏中已经获得的线索，请在持久化出错后显式调用 <code>LoopClockBehaviour.RecoverMemoryFromCurrentSession()</code>。它先将现有主文件和 <code>.bak</code> 分别复制到存档旁以 <code>.recovery-&lt;unique-id&gt;</code> 结尾的文件。两份复制均成功后，才原子写入当前永久事实和持久线索；不会导入旧线索。已有恢复备份不会被覆盖，重试时也一样。复制或写入失败会返回 <code>false</code>、设置 <code>PersistenceError</code> 并保持自动保存禁用；当前线索仍保留在内存中。恢复要求 Start 已完成、会话有效，且不处于读取过程或 Inspector 事件组内。此操作不会重置、推进或启动循环。如果会话发生故障，请先修复原因并成功重置。The Last Bell 在开始和暂停菜单中显示错误及恢复按钮。仅在希望将当前线索作为新存档时选择该操作；原文件仍保留在单独的恢复备份中。</p>
+<h2>在 21:30 打开门</h2>
+<p>在定义中添加事件 <code>open_door</code>，勾选<strong>使用一天中的时间</strong>并设置 21:30。给激活的场景对象添加 <strong>LoopCueEvents</strong>，选择时钟和相同 ID，将 Actions 的 UnityEvent 连接到门的 <code>GameObject.SetActive(false)</code>。给门添加 <strong>LoopResetTransform</strong>，指定相同时钟与唯一参与对象 ID。</p>
+<p>事件每个循环仅执行一次，顺序稳定。秒数默认相对循环起点，早于起始时刻表示次日。ID 和作者输入的数据不翻译。延迟调用必须保留原始代次标记。每组 UnityEvent 同步执行；时钟的 <code>RestartLoop</code>, <code>RestartAndRun</code> 与 <code>LoadMemoryFromEvent</code> 在该组返回后才切换循环。同一组最后提出的切换请求生效。直接调用底层会话切换的代码，需要自行协调回调边界。</p>
+<h2>玩家知道密码时显示按钮</h2>
+<p>添加 <strong>LoopKnowledgeGate</strong>，指定观察者 <code>player</code> 与密码事实 ID。把按钮放入<strong>已知时启用的对象</strong>；也可要求特定值，添加未知状态的对象或事件。在学习、读取、重置后的时钟同步或帧末重新判断。时钟甚至能重新启用此组件所在的未激活对象。请将时钟放在受控对象之外。禁用组件本身会停止判断。在时钟之后加载的场景中，对象在加载时必须处于激活状态，否则请自行调用 <code>BindClock()</code>（Reset Transform 调用 <code>RegisterInitialState()</code>）。</p>
+<h2>艾玛在 22:00 到达厨房</h2>
+<p>添加 <strong>LoopTimedRoute</strong>，指定唯一 ID 和角色 Transform。在角色层级之外创建固定目标标记，按严格递增的秒数或 HH:MM 添加路线点。可选择插值或到时切换。绑定时捕获标记的世界姿态。时钟的 <code>Advance</code>/<code>AdvanceTo</code> 会立即设置精确的计划姿态，短时间跳转也一样。</p>
+<p>路线负责恢复并验证角色。不要在同一角色上添加 Reset Transform，系统会报告所有权冲突。Transform 路线不包含避墙。运行时生成对象需先配置字段并调用 <code>BindClock()</code>，然后再修改角色。物品栏、动画、父对象/缩放变化及重建已销毁对象需要自定义参与对象。</p>
+<p><strong>LoopNavMeshRoute</strong> 是独立可选程序集，仅在存在 <code>com.unity.ai.navigation</code> 2.x 时启用。指定 NavMeshAgent 并烘焙合适的 NavMesh。正常时间推进时（任何速度）由代理寻路，时钟暂停时停止代理；跳转、读取或重置时 Warp 到计划姿态。重置验证接受代理在 NavMesh 上吸附后的起点，误差在其半径以内。位于 NavMesh 之外的姿态会使重置失败，并在 Console 中报告。标记必须位于烘焙表面上。基础包不会安装 Navigation。</p>
+<h2>暂停与解释</h2>
+<p>游戏时间使用 <code>Time.deltaTime</code>，因此 <code>Time.timeScale = 0</code> 会停止时钟。真实时间明确忽略 timeScale。速度表示每个时间源秒对应的循环秒数。重置等待始终使用真实时间。手动跳转可以推进暂停的时钟。代码也可使用独立的 <code>Pause(owner)</code>/<code>Resume(owner)</code> 暂停所有者。</p>
+<p>Workbench 将按观察者筛选的知识与原因日志并排显示。选择一行即可查看完整来源、原因、范围和时间。日程区分已执行与待执行事件；世界事实显示实际值。角色可能相信错误或过时的信息，知识不等于事实。重置验证显示具体参与对象的问题。日志仅保留最近 512 条，不是无限持久审计记录。若某个组件在绑定或刷新时抛出异常，LoopKit 会在 Console 中连同对象记录该异常，并继续更新其余组件；刷新错误每个循环只报告一次。</p>
+<h2>示例</h2>
+<p>UPM 版本需在 Package Manager → Samples 导入 <strong>The Last Bell</strong>；Asset Store 版本已包含示例。在 Unity <strong>6000.5.7f1</strong> 的 <strong>URP 17.5</strong> 项目中，打开示例文件夹内的 <code>Prepared/TheLastBell.unity</code>，然后进入 Play mode。Asset Store 版本的路径为 <code>Assets/StrangeEuphoriaXR/LoopKit/Samples/LastBell/Prepared/TheLastBell.unity</code>；从 UPM 导入后，场景位于 <code>Assets/Samples/LoopKit/1.0.0/The Last Bell/Prepared</code>。<code>Prepared/Prefabs</code> 包含 12 个可复用的模型预制件。准备好的场景和材质需要 URP；LoopKit 核心不依赖 URP。使用 <strong>Built-in Render Pipeline</strong> 时，选择 <strong>Tools → Strange Euphoria XR → LoopKit → Create last bell scene</strong>，生成使用 Standard 材质的场景。URP 项目也可继续使用此生成器。</p>
+<p>WASD/方向键行走，E 互动，Tab 查看线索，Esc 暂停。完整谜题需要三个循环：了解柜子密码；取保险丝并阅读手册；提前应用记住的信号顺序并通知信使。菜单、线索和结局支持四种语言。重启 Player 后线索仍在，但实物不会跨循环保留。场景包含原创 Blender 模型：车站、列车、庭院、角色及谜题物品。无需其他插件或 AI 模型。</p>
+<p><strong>A second chance</strong> 是更小的英语示例：六秒后读取 2417，重置后在信使五秒离开前打开门。</p>
+<h2>核心、自定义系统与 MCP</h2>
+<p><code>CaptureCoreState</code>/<code>RestoreCoreState</code> 保存时钟、已执行事件前缀、事实和知识。仅核心读取会拒绝已注册的世界参与对象。需要永久知识和重置世界时，使用 <code>CapturePersistentMemory</code>/<code>RestorePersistentMemory</code>。两者都在修改前验证，并使旧操作失效。底层操作真正结束前不得释放 <code>LoopWork</code>。恢复失败会保持停止；修复原因后重试。会话仅由创建线程修改，只有 <code>LoopWork.Dispose</code> 可以从工作线程调用。</p>
+<p><code>LoopRehearsal.Run</code> 检查逻辑分支，不模拟物理、画面或寻路。只读 MCP 适配器精确支持 Unity Pipeline <strong>0.8.0-exp.1</strong>。通过 <code>unity mcp --project-path &lt;项目绝对路径&gt;</code> 连接；<code>loopkit_status</code>、<code>loopkit_schedule</code>、<code>loopkit_knowledge</code>、<code>loopkit_reset_report</code> 仅读取明确选定的时钟与观察者。其他版本排除适配器。Player 内不包含控制服务器。</p>
+<h2>自动重复循环</h2>
+<p>要自动重复循环，将最后一个日程事件连接到 <strong>LoopClockBehaviour → RestartAndRun</strong>。时钟在取消旧工作、等待结束并成功验证重置后继续运行。<strong>RestartLoop</strong> 仅重置并停止。失败或被新请求替代的重置不会启动时钟。Workbench 与运行中时钟的 Inspector 提供相同的 <strong>重置并运行</strong> 操作。事件会看到其精确时间边界上的 Transform 路线姿态，包括时间跳转。NavMesh 路线在正常 tick 中使用代理移动，在显式跳转/重置时 Warp；正常寻路不保证在事件时刻到达目标姿态。销毁活动时钟时，如果会话已就绪且有效，也会保存更改后的永久记忆。</p>
+<h2>1.0.0 版本</h2>
+<p>包含 Inspector 操作和知识条件、永久记忆、定时路线、重置验证以及 Editor 中的只读 MCP 诊断。The Last Bell 是一个需要三个循环完成的谜题，包含 12 个原创 FBX 模型；A second chance 是较小的示例。编辑器工具、指南、API 参考与 The Last Bell 支持英语、俄语、西班牙语和简体中文。</p>
+<h2>包内容与许可</h2>
+<p>本包包含源代码、着色器、产品图形、文档与示例资源。The Last Bell 包含由发行者提供、使用 Suno 创作并处理为循环播放的音乐《Autumn Clues》；音量可在示例菜单中调整。清单声明了标准 Unity Engine 模块。Navigation 和 Unity Pipeline 是单独安装的可选依赖。The Last Bell 包含采用 SIL Open Font License 1.1 授权的 Noto Sans CJK SC 字体（见 Third-party notices）。本包不捆绑第三方代码库或 AI 模型权重。</p>
+<p><a href="../assets/LICENSE.txt">许可</a> · <a href="../assets/Third-Party-Notices.txt">第三方声明</a> · <a href="../assets/CHANGELOG.txt">更新记录</a></p>
+<p><a href="api.html">API 参考</a></p></article></main><footer><span>LoopKit 1.0.0 · Strange Euphoria XR 出品</span><span><a href="../assets/LICENSE.txt">许可</a> · <a href="../assets/Third-Party-Notices.txt">第三方声明</a> · <a href="../assets/CHANGELOG.txt">更新记录</a></span><span>© 2026 Strange Euphoria XR。保留所有权利。</span></footer></body></html>

@@ -1,0 +1,47 @@
+# LoopKit changelog / Изменения / Cambios / 更新记录
+
+## 1.0.0 — 2026-10-29
+
+### English
+
+- Author timed UnityEvent actions, observer knowledge conditions and Transform routes in the Inspector. Inspect facts, evidence, sources and reasons in Workbench.
+- Keep permanent clues between loops and game launches with validated file loading, atomic replacement and a previous-file backup. Moving or adding schedule cues in a game update keeps saved memory valid.
+- Use `RestartAndRun` to resume only after successful reset verification; `RestartLoop` resets and stops. Superseded or failed transitions do not resume the clock.
+- Synchronize Transform routes at each cue boundary, including time skips. Preserve dirty permanent memory when an initialized, valid active clock is destroyed.
+- Import The Last Bell, a three-loop mystery with 12 original FBX models, the publisher-supplied “Autumn Clues” soundtrack created with Suno, and four gameplay languages, or the smaller A second chance example.
+- Read Editor tools, guides, API reference and the local HTML site in English, Russian, Spanish or Simplified Chinese. Optional integrations support Navigation 2.x and read-only MCP through Unity Pipeline 0.8.0-exp.1.
+
+Requires Unity 6000.5.7f1. See the guide for save boundaries, custom participants and integration requirements.
+
+### Русский
+
+- Настраивайте события UnityEvent по времени, условия по знаниям наблюдателя и маршруты Transform в инспекторе. Workbench показывает факты, знания, источники и причины.
+- Сохраняйте постоянные улики между петлями и запусками игры: загрузка проверяет данные, запись атомарно заменяет файл и сохраняет прежнюю копию. Перенос и добавление событий расписания в обновлении игры сохранённую память не ломают.
+- `RestartAndRun` продолжает время только после успешной проверки сброса; `RestartLoop` сбрасывает и останавливает. Неуспешные или заменённые переходы не запускают часы.
+- Transform-маршруты синхронизируются на точной границе каждого события, включая перемотку. При уничтожении активных часов изменённая постоянная память сохраняется, если сессия инициализирована и исправна.
+- Импортируйте The Last Bell — загадку трёх петель с 12 оригинальными FBX-моделями, предоставленным издателем треком «Autumn Clues», созданным с Suno, и четырьмя языками — или небольшой пример A second chance.
+- Редактор, руководства, справочник API и локальный HTML-сайт доступны на английском, русском, испанском и упрощённом китайском. Необязательные интеграции поддерживают Navigation 2.x и MCP только для чтения через Unity Pipeline 0.8.0-exp.1.
+
+Требуется Unity 6000.5.7f1. Границы сохранений, свои участники сброса и требования интеграций описаны в руководстве.
+
+### Español
+
+- Configura acciones UnityEvent temporales, condiciones de conocimiento y rutas Transform en el Inspector. Workbench muestra hechos, conocimientos, fuentes y motivos.
+- Conserva pistas permanentes entre bucles y sesiones con carga validada, sustitución atómica y copia del archivo anterior. Mover o añadir eventos del horario en una actualización mantiene válida la memoria guardada.
+- `RestartAndRun` continúa solo tras verificar el reinicio; `RestartLoop` reinicia y detiene. Las transiciones fallidas o sustituidas no activan el reloj.
+- Las rutas Transform se sincronizan en el instante exacto de cada evento, incluidos los saltos temporales. Al destruir un reloj activo se guarda la memoria permanente modificada si la sesión está inicializada y es válida.
+- Importa The Last Bell, un misterio de tres bucles con 12 modelos FBX originales, la pista «Autumn Clues» proporcionada por el editor y creada con Suno, y cuatro idiomas, o el ejemplo más pequeño A second chance.
+- Editor, guías, referencia API y sitio HTML local en inglés, ruso, español y chino simplificado. Integraciones opcionales con Navigation 2.x y MCP de solo lectura mediante Unity Pipeline 0.8.0-exp.1.
+
+Requiere Unity 6000.5.7f1. La guía explica los límites de guardado, los participantes propios y los requisitos de integración.
+
+### 简体中文
+
+- 在 Inspector 配置定时 UnityEvent 操作、观察者知识条件与 Transform 路线。在 Workbench 查看事实、知识、来源与原因。
+- 永久线索可跨循环和游戏启动保留；读取时验证数据，写入时原子替换文件并保留上一份备份。游戏更新中移动或添加日程事件不会使已保存的记忆失效。
+- `RestartAndRun` 仅在重置验证成功后继续运行；`RestartLoop` 重置并停止。失败或被替代的转换不会启动时钟。
+- Transform 路线在每个事件的精确时间边界同步，包括时间跳转。销毁活动时钟时，如果会话已初始化且有效，会保存更改后的永久记忆。
+- 可导入 The Last Bell：包含 12 个原创 FBX 模型及由发行者提供、使用 Suno 创作的音乐《Autumn Clues》，支持四种语言的三循环谜题；也可导入较小的 A second chance 示例。
+- 编辑器、指南、API 参考和本地 HTML 网站支持英语、俄语、西班牙语和简体中文。可选集成支持 Navigation 2.x，以及通过 Unity Pipeline 0.8.0-exp.1 提供的只读 MCP。
+
+需要 Unity 6000.5.7f1。存档范围、自定义参与对象与集成要求请参阅指南。

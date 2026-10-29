@@ -1,0 +1,28 @@
+LoopKit 1.0.0 — Third-Party Notices
+
+Package material
+
+LoopKit includes publisher-provided C# source, shaders, documentation, product artwork and demonstration assets. The Last Bell contains 12 original FBX models created for this package. A second chance uses Unity primitives.
+
+The Last Bell includes AutumnClues.wav, a publisher-supplied soundtrack created with Suno and prepared for looping playback. It is supplied as part of the sample under the applicable LoopKit license. This notice grants no separate license to redistribute the music as a standalone product.
+
+The Last Bell includes the unmodified Noto Sans CJK SC Regular font (Noto CJK project), distributed under the SIL Open Font License 1.1. The complete license is supplied in Samples/LastBell/Runtime/Fonts/NotoSansCJK-OFL.txt (Samples~/LastBell in the UPM archive). Font copyright: © 2014-2021 Adobe (http://www.adobe.com/). Source: https://github.com/notofonts/noto-cjk/tree/f8d157532fbfaeda587e826d4cd5b21a49186f7c .
+
+No third-party source library, binary library or AI model weights are redistributed in this package.
+
+Unity dependencies — installed separately
+
+The package manifest references these standard Unity Engine modules:
+- com.unity.modules.audio 1.0.0
+- com.unity.modules.imgui 1.0.0
+- com.unity.modules.jsonserialize 1.0.0
+- com.unity.modules.physics 1.0.0
+- com.unity.modules.uielements 1.0.0
+
+Optional adapters reference com.unity.ai.navigation 2.x and com.unity.pipeline 0.8.0-exp.1 (Unity Pipeline). The matching package must already be installed to enable its adapter. These packages are not bundled with LoopKit.
+
+The included test sources use the Unity Test Framework and its NUnit support, supplied by the Unity project. Neither implementation is bundled with LoopKit.
+
+Unity Engine, Unity packages and their dependencies remain subject to their own applicable terms and license notices. Consult the installed package's LICENSE and Third-Party Notices files for that package's components.
+
+LoopKit licensing is described in LICENSE.md. This inventory does not grant additional rights to any Unity component.

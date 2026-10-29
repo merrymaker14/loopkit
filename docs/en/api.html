@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="A Unity toolkit for time loops, NPC schedules and character knowledge. Reset the world, retain a clue and explain why the next attempt can end differently."><title>LoopKit API | Strange Euphoria XR</title><link rel="icon" href="../assets/logo.png" type="image/png"><link rel="stylesheet" href="../assets/site.css?v=1.0.0"><script src="../assets/language.js" defer></script></head>
+<body><a class="skip" href="#main">Skip to content</a><header><a class="brand" href="index.html"><img src="../assets/logo.png" width="44" height="44" alt=""><span>LoopKit</span></a><nav aria-label="Documentation"><a href="guide.html">Quick start and guide</a><a href="api.html">API reference</a></nav><nav class="languages" aria-label="Documentation language"><a href="../en/api.html" hreflang="en" lang="en" data-language="en" aria-current="page">English</a><a href="../ru/api.html" hreflang="ru" lang="ru" data-language="ru">Русский</a><a href="../es/api.html" hreflang="es" lang="es" data-language="es">Español</a><a href="../zh-Hans/api.html" hreflang="zh-Hans" lang="zh-Hans" data-language="zh-Hans">简体中文</a></nav></header><main id="main" tabindex="-1"><article class="document"><a class="back" href="index.html">LoopKit overview</a><h1>LoopKit API reference</h1>
+<p>Namespaces: <code>StrangeEuphoriaXR.LoopKit</code> (engine-independent), <code>.Unity</code> (Unity hosts/files), <code>.Editor</code> (diagnostics and authoring).</p>
+<pre tabindex="0"><code class="language-csharp">using StrangeEuphoriaXR.LoopKit;
+
+var loop = new LoopSession(&quot;courtyard-v1&quot;,
+    new[] { new LoopCue(&quot;courier_leaves&quot;, 5, &quot;courier&quot;, &quot;leave&quot;, &quot;gate&quot;) },
+    new[] { new LoopFact(&quot;gate&quot;, &quot;closed&quot;), new LoopFact(&quot;code&quot;, &quot;2417&quot;) });
+loop.TryLearn(loop.Stamp, &quot;player&quot;, &quot;code&quot;, &quot;2417&quot;,
+    LoopLifetime.Persistent, &quot;note&quot;, &quot;Read the keeper's note.&quot;);
+loop.AdvanceTo(6);
+var reset = loop.BeginReset(); // immediate only when every registered operation has settled
+// In a host update: if (!reset.Done) reset.Tick(unscaledRealSeconds);
+if (reset.Done &amp;&amp; reset.Report.Succeeded) loop.Running = true;
+</code></pre>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LoopSession.SetSchedule</code></td>
+<td>Stopped at elapsed zero with no outstanding work or cue dispatch; validates a full replacement before mutation; stable ties; max 10000 cues</td>
+</tr>
+<tr>
+<td><code>ConfigureFacts</code></td>
+<td>Before the first run, writes or reset, with no outstanding work; max 10000 definitions</td>
+</tr>
+<tr>
+<td><code>Advance</code> / <code>AdvanceTo</code></td>
+<td>Nonnegative finite time, at most 315360000 seconds; callbacks observe each exact boundary</td>
+</tr>
+<tr>
+<td><code>Pause</code> / <code>Resume</code></td>
+<td>Owner identity; every pause owner must release its own pause, and a reset clears all owners</td>
+</tr>
+<tr>
+<td><code>Stamp</code> / <code>IsCurrent</code></td>
+<td>Session identity plus monotonically increasing generation; invalid while resetting/faulted/disposed</td>
+</tr>
+<tr>
+<td><code>BeginWork</code></td>
+<td>Keep the lease until actual task/native settlement, not merely cancellation acknowledgement</td>
+</tr>
+<tr>
+<td><code>TrySetFact</code></td>
+<td>Explicit world state; does not grant anyone knowledge</td>
+</tr>
+<tr>
+<td><code>TryLearn</code></td>
+<td>Observer, observed value, scope, source and reason; distinct from truth</td>
+</tr>
+<tr>
+<td><code>Knowledge.TryExplain</code></td>
+<td>Last current evidence, including source, reason and learned time/generation</td>
+</tr>
+<tr>
+<td><code>TryRecordDecision</code></td>
+<td>Accepted/refused result and reason; does not execute a game action</td>
+</tr>
+<tr>
+<td><code>Knowledge.Journal</code></td>
+<td>Last 512 chronological entries; diagnostic history, not an unlimited durable audit log</td>
+</tr>
+<tr>
+<td><code>Register(ILoopParticipant)</code></td>
+<td>Unique participant ID, cancellation, restoration, verification; register before reset</td>
+</tr>
+<tr>
+<td><code>Unregister(ILoopParticipant)</code></td>
+<td>Remove immediately outside a reset. During a reset, keep the active snapshot and defer removal until completion, before <code>ResetFinished</code>, including failure. Current callbacks/settlement may still run; destroyed participants must tolerate them. Removal does not settle work leases.</td>
+</tr>
+<tr>
+<td><code>BeginReset</code></td>
+<td>Stops, invalidates, cancels, waits, restores, verifies; default timeout 10 real seconds; never resumes automatically</td>
+</tr>
+<tr>
+<td><code>CaptureCoreState</code></td>
+<td>Only clock/facts/evidence; forbidden during cue dispatch or a transition</td>
+</tr>
+<tr>
+<td><code>RestoreCoreState</code></td>
+<td>Exact schema/definition fingerprint and valid cue prefix; rejects sessions with world participants</td>
+</tr>
+<tr>
+<td><code>LoopCheckpointFile</code></td>
+<td>JSON capped at 4 MiB; atomic same-directory file replacement and previous <code>.bak</code></td>
+</tr>
+<tr>
+<td><code>LoopRehearsal.Run</code></td>
+<td>Fresh logical session factory, explicit actions and assertions; no simulation of scene systems; an <code>ExpectKnowledge</code> step with an empty value accepts any known value</td>
+</tr>
+</tbody>
+</table></div>
+<p>Observer/fact pairs are limited to 10000; both a persistent baseline and a temporary current belief can be stored for a pair. IDs are nonblank, at most 160 characters and contain no control characters. Value/reason fields are at most 8192 characters. The file-size limit can be reached before these per-field limits; oversized saves fail before replacing an existing file.</p>
+<p>All mutable session operations belong to its creating thread. Only <code>LoopWork.Dispose</code> is safe from a worker thread. A generation stamp is not a security boundary against arbitrary game code; it rejects accidentally late work.</p>
+<p>The MCP adapter targets Unity Pipeline <code>0.8.0-exp.1</code> and its <code>Unity.Pipeline.Attributes</code> API. Its assembly is excluded for other Pipeline versions or when Pipeline is absent; the core remains available. Connect with <code>unity mcp --project-path &lt;absolute-project-path&gt;</code>. Its four <code>loopkit_*</code> commands are read-only; the package contains no Player server.</p>
+<h2>Inspector components and durable memory</h2>
+<div class="table-wrapper" tabindex="0" role="region" aria-label="API"><table>
+<thead>
+<tr>
+<th>API</th>
+<th>Contract</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CapturePersistentMemory</code></td>
+<td>Permanent world facts and persistent evidence baselines only; no clock/scene state.</td>
+</tr>
+<tr>
+<td><code>RestorePersistentMemory</code></td>
+<td>Validate and deep-copy before mutation; cancel, settle, replace memory, restore/verify participants at time zero.</td>
+</tr>
+<tr>
+<td><code>LoopMemoryFile</code></td>
+<td>4 MiB bounded JSON, atomic replacement, previous .bak (never loaded automatically); same schema, definition ID and persistent fact IDs. Schedule changes keep memory valid.</td>
+</tr>
+<tr>
+<td><code>Revision / MemoryRevision</code></td>
+<td>Change counters for host synchronization and durable saves; reading never invokes callbacks.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RememberAcrossRuns</code></td>
+<td>One-checkbox automatic load/save; MemoryPath is relative to persistentDataPath unless absolute.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RecoverMemoryFromCurrentSession()</code></td>
+<td>Explicit recovery after a persistence error and after Start. Copies existing primary and <code>.bak</code> files to unique <code>.recovery-&lt;id&gt;</code> files, then saves current permanent memory. Returns false during a load/designer event or for an invalid session. File failure sets <code>PersistenceError</code> and keeps automatic saving disabled; success enables it. Does not load old clues, reset the world or change running state.</td>
+</tr>
+<tr>
+<td><code>LoopTimeSource</code></td>
+<td>GameTime by default; RealTime is explicit. Reset settlement uses real time in both modes.</td>
+</tr>
+<tr>
+<td><code>LoopCueEvents.TryInvoke</code></td>
+<td>Cue ID plus original LoopStamp; rejects old generations. UnityEvent group is synchronous.</td>
+</tr>
+<tr>
+<td><code>RestartLoop / LoadMemoryFromEvent</code></td>
+<td>Void UnityEvent entry points; transitions defer until the current group ends. Last transition request wins. Inside a group, <code>Restart()</code> and <code>LoadMemory()</code> return <code>null</code> because the transition starts afterwards.</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeGate</code></td>
+<td>Observer/fact/value condition, object activation and events; refresh after synchronization/reset/load, including inactive targets.</td>
+</tr>
+<tr>
+<td><code>LoopKnowledgeAction.Learn</code></td>
+<td>Inspector-authored evidence, lifetime, source and reason; world truth is unchanged.</td>
+</tr>
+<tr>
+<td><code>LoopFactAction.Apply</code></td>
+<td>Set world truth without teaching observers.</td>
+</tr>
+<tr>
+<td><code>LoopTimedRoute</code></td>
+<td>Captured stationary world-space markers, increasing times, step/interpolation; reset participant; no obstacle avoidance.</td>
+</tr>
+<tr>
+<td><code>LoopClockComponent.BindClock</code></td>
+<td>Call after assigning a spawned view’s clock. Changing/removing a binding during either session’s reset, or binding to a faulted target, throws before changing the old binding and restores the clock field. Retry after the transition/recovery. The clock's own Awake logs a failing component with its object and continues with the rest.</td>
+</tr>
+<tr>
+<td><code>LoopNavMeshRoute</code></td>
+<td>Optional Navigation 2.x assembly; baked NavMesh/agent required; steers at any clock speed; clock pauses stop motion; skips, loads and resets warp; reset verification allows the NavMesh-snapped start within the agent radius.</td>
+</tr>
+<tr>
+<td><code>LoopClockBehaviour.RestartAndRun</code></td>
+<td>Void UnityEvent action: restart, wait for successful settlement/verification and run. A newer reset/load cancels this resume request.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Requires Unity 6000.5.7f1. See the guide for Inspector recipes, file failure recovery and the complete sample.</p></article></main><footer><span>LoopKit 1.0.0 · A tool by Strange Euphoria XR</span><span><a href="../assets/LICENSE.txt">License</a> · <a href="../assets/Third-Party-Notices.txt">Third-party notices</a> · <a href="../assets/CHANGELOG.txt">Changelog</a></span><span>© 2026 Strange Euphoria XR. All rights reserved.</span></footer></body></html>

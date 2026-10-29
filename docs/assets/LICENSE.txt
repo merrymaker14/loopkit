@@ -1,0 +1,8 @@
+# LoopKit license
+
+Copyright © 2026 Strange Euphoria XR. All rights reserved.
+
+Copies acquired through the Unity Asset Store are licensed under the Unity Asset Store End User License Agreement:
+https://unity.com/legal/as-terms
+
+This notice does not replace or amend that agreement. See Third-Party Notices.txt for the package's component inventory.
